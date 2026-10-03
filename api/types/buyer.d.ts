@@ -1,0 +1,43 @@
+export type IBuyer = {
+	additionalInfo: any;
+	batchId: string;
+	buyerCategory?: string;
+	buyerName: string;
+	calcAvailableLimit: number;
+	calcFinanced: number;
+	calcOnDelivery: number;
+	calcOutstanding: number;
+	calcOverdue: number;
+	calcPaid: number;
+	contactNumber?: string;
+	crNumber: number;
+	createdAt: string;
+	creditLimit: number;
+	emailAddress?: string;
+	facilityName: string;
+	id: number;
+	installmentNumber: number;
+	isCurrent: boolean;
+	repaymentPeriod: number;
+	updatedAt: string;
+	v: number;
+};
+
+export type IBuyerFinancierLimit = {
+	id: number;
+	buyerId: number;
+	financierId: number;
+	financierName: string;
+	financierFacilityName: string;
+	creditLimit: number;
+	availableLimit: number;
+	setAndUseLimit: boolean;
+	repaymentPeriod: number;
+	installmentNumber: number;
+	createdBy: string;
+	createdByName?: string;
+	createdAt: string;
+	updatedBy: string;
+	updatedByName?: string;
+	updatedAt: string;
+};

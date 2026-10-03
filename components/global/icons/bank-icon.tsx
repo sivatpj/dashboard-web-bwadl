@@ -1,0 +1,9 @@
+export const BankIcon = (props: React.SVGProps<SVGSVGElement>) => (
+	<svg {...props} width="inherit" height="inherit" viewBox="0 0 24 24" fill="inherit" xmlns="http://www.w3.org/2000/svg">
+		<path d="M12 2L22 8H2L12 2Z" />
+		<rect x="4" y="9" width="2.5" height="9" />
+		<rect x="10.75" y="9" width="2.5" height="9" />
+		<rect x="17.5" y="9" width="2.5" height="9" />
+		<rect x="2" y="19" width="20" height="2.5" />
+	</svg>
+);

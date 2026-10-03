@@ -1,0 +1,75 @@
+# Place at: .github/workflows/deploy.yml  (in the FRONTEND repo)
+#
+# SSR edition: the frontend now ships as a Docker image (next start) and runs on Fargate.
+# Flow on every push to main:
+#   1. Build the image (BASE_API_URL baked at build time; /v1 is relative to the ALB host).
+#   2. Push to ECR (git SHA + latest).
+#   3. Register a new task-def revision with the new image and roll the frontend service.
+#
+# Fill the repo Variables from the CloudFormation stack Outputs.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}                  # eu-west-1
+  ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}                  # GitHubActionsRoleArn output
+  ECR_URI: ${{ vars.FRONTEND_ECR_REPOSITORY_URI }}    # FrontendEcrRepositoryUri output
+  CLUSTER: ${{ vars.ECS_CLUSTER_NAME }}               # EcsClusterName output
+  SERVICE: ${{ vars.FRONTEND_SERVICE_NAME }}          # FrontendServiceName output
+  FAMILY: bwadl-web
+  # Relative path so the browser hits the API on the same ALB host (http or https, any domain).
+  BASE_API_URL: ${{ vars.BASE_API_URL }}              # default: /v1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        run: |
+          set -euo pipefail
+          SHA="${GITHUB_SHA::12}"
+          docker build \
+            --build-arg BASE_API_URL="${BASE_API_URL:-/v1}" \
+            -t "$ECR_URI:$SHA" -t "$ECR_URI:latest" .
+          docker push "$ECR_URI:$SHA"
+          docker push "$ECR_URI:latest"
+          echo "image=$ECR_URI:$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Register new task definition with the new image
+        id: register
+        run: |
+          set -euo pipefail
+          td=$(aws ecs describe-task-definition --task-definition "$FAMILY" --query 'taskDefinition')
+          echo "$td" \
+            | jq --arg IMG "${{ steps.build.outputs.image }}" '.containerDefinitions[0].image=$IMG
+                | del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)' \
+            > /tmp/web.json
+          NEW=$(aws ecs register-task-definition --cli-input-json file:///tmp/web.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "td=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy frontend service
+        run: |
+          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+            --task-definition "${{ steps.register.outputs.td }}"
+          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"

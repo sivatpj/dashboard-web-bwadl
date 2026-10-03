@@ -1,0 +1,18 @@
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "yarn-1_x"]
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = ["yarn install --check-cache"]
+cacheDirectories = ["/usr/local/share/.cache/yarn/v6"]
+paths = ["/app/node_modules/.bin"]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = ["yarn run build"]
+cacheDirectories = [".next/cache", "node_modules/.cache"]
+
+[start]
+cmd = "yarn run start"

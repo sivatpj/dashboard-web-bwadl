@@ -1,0 +1,22 @@
+export type IBankEntity = {
+	id: number;
+	accountId: number;
+	accountCode: string;
+	bankCode: string;
+	bankName: string;
+	address: string | null;
+	accountHolderName: string | null;
+	accountNumber: string | null;
+	iban: string | null;
+	shortName: string;
+	isActive: boolean;
+	createdAt: string;
+	createdBy: string;
+	createdByName?: string;
+	updatedAt: string;
+	updatedBy: string;
+	updatedByName?: string;
+	currencyCode?: string | null;
+	balance?: number | null;
+	availableBalance?: number | null;
+};

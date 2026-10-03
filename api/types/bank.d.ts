@@ -1,0 +1,22 @@
+export type IBank = {
+	id: number;
+	date: string;
+	v: number;
+	isCurrent: boolean;
+	capital: number;
+	transferred: number;
+	expenses: number;
+	description: string;
+	bankBalance: number;
+	additionalInfo: null | string;
+	batchId: string;
+	createdAt: string;
+	updatedAt: string;
+	calcDistribution?: number;
+	calcFinanced?: number;
+	calcCollected?: number;
+	calcDiffSettlement?: number;
+	calcBalance?: number;
+	calcDifference?: number;
+	financierId?: number;
+};
